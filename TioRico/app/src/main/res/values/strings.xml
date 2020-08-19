@@ -1,0 +1,8 @@
+<resources>
+    <string name="app_name">TioRicoV4</string>
+    <string name="enviar_ubicaci_n">Enviar Ubicación</string>
+    <string name="esta_es_tu_ubicaci_n">Esta es tu ubicación.</string>
+    <string name="latitud">Latitud:</string>
+    <string name="longitud">Longitud:</string>
+    <string name="ingrese_un_n_mero_de_tel_fono">Ingrese un número de teléfono</string>
+</resources>

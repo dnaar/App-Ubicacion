@@ -7,6 +7,7 @@ import androidx.core.content.ContextCompat;
 
 import android.Manifest;
 import android.content.Context;
+import android.content.IntentSender;
 import android.content.pm.PackageManager;
 import android.location.Location;
 import android.location.LocationListener;
@@ -18,12 +19,25 @@ import android.widget.EditText;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.google.android.gms.common.api.ApiException;
+import com.google.android.gms.common.api.ResolvableApiException;
+import com.google.android.gms.location.LocationRequest;
+import com.google.android.gms.location.LocationServices;
+import com.google.android.gms.location.LocationSettingsRequest;
+import com.google.android.gms.location.LocationSettingsResponse;
+import com.google.android.gms.location.LocationSettingsStatusCodes;
+import com.google.android.gms.tasks.OnCompleteListener;
+import com.google.android.gms.tasks.Task;
+
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
 
 public class MainActivity extends AppCompatActivity {
 
     double latitud, longitud;
+
+    private final int REQUEST_CHECK_CODE = 8989;
+    private LocationSettingsRequest.Builder builder;
 
     private static final int REQUEST_CODE_LOCATION_PERMISSION = 1;
     private TextView txtLat;
@@ -38,6 +52,39 @@ public class MainActivity extends AppCompatActivity {
         txtLat = findViewById(R.id.latitud_text);
         txtLong = findViewById(R.id.longitud_text);
         txt_Phone = findViewById(R.id.phone_text);
+
+        //Confirmación de localización activada-----------------------------------
+        LocationRequest request = new LocationRequest().setFastestInterval(1500).setInterval(3000).setPriority(LocationRequest.PRIORITY_HIGH_ACCURACY);
+        builder = new LocationSettingsRequest.Builder().addLocationRequest(request);
+        Task<LocationSettingsResponse> result = LocationServices.getSettingsClient(this).checkLocationSettings(builder.build());
+        result.addOnCompleteListener(new OnCompleteListener<LocationSettingsResponse>() {
+            @Override
+            public void onComplete(@NonNull Task<LocationSettingsResponse> task) {
+                try {
+                    task.getResult(ApiException.class);
+                } catch (ApiException e) {
+                    switch(e.getStatusCode()){
+                        case LocationSettingsStatusCodes
+                                .RESOLUTION_REQUIRED:
+                            try {
+                                ResolvableApiException resolvableApiException = (ResolvableApiException) e;
+                                resolvableApiException.startResolutionForResult(MainActivity.this, REQUEST_CHECK_CODE);
+                            } catch (IntentSender.SendIntentException ex) {
+                                ex.printStackTrace();
+                            }catch (ClassCastException ex){
+
+                            }
+                            break;
+                        case LocationSettingsStatusCodes.SETTINGS_CHANGE_UNAVAILABLE:
+                        {
+                            break;
+                        }
+                    }
+                }
+            }
+        });
+        //---------------------------------------------------------------------
+
 
         //Corroborar permisos de Ubicación.     //Pedirlos de ser necesario
         if (ContextCompat.checkSelfPermission(getApplicationContext(), Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
@@ -76,7 +123,6 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
-
     private void _actualizarLocalizacion() {
         LocationManager ubicacion = (LocationManager) getSystemService(Context.LOCATION_SERVICE);
         if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
@@ -95,9 +141,7 @@ public class MainActivity extends AppCompatActivity {
             txtLong.setText(String.format("%.7f",longitud));
         }
 
-
     }
-
 
     private void SendMessage(){
         int permissionCheck = ContextCompat.checkSelfPermission(this, Manifest.permission.SEND_SMS);
@@ -119,10 +163,5 @@ public class MainActivity extends AppCompatActivity {
             ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.SEND_SMS}, 0);
         }
     }
-
-
-
-
-
 
 }

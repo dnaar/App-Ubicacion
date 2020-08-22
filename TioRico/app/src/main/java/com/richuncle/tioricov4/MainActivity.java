@@ -42,7 +42,7 @@ public class MainActivity extends AppCompatActivity {
     private static final int REQUEST_CODE_LOCATION_PERMISSION = 1;
     private TextView txtLat;
     private TextView txtLong;
-    EditText txt_Phone;
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -51,7 +51,6 @@ public class MainActivity extends AppCompatActivity {
 
         txtLat = findViewById(R.id.latitud_text);
         txtLong = findViewById(R.id.longitud_text);
-        txt_Phone = findViewById(R.id.phone_text);
 
         //Confirmación de localización activada-----------------------------------
         LocationRequest request = new LocationRequest().setFastestInterval(1500).setInterval(3000).setPriority(LocationRequest.PRIORITY_HIGH_ACCURACY);
@@ -96,12 +95,6 @@ public class MainActivity extends AppCompatActivity {
         }else{
             _actualizarLocalizacion();
         }
-        findViewById(R.id.change_location_button).setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                SendMessage();
-            }
-        });
     }
 
     @Override
@@ -114,13 +107,6 @@ public class MainActivity extends AppCompatActivity {
                 Toast.makeText(this, "Permisos de ubicación negados", Toast.LENGTH_SHORT).show();
             }
         }
-        if (requestCode == 0 && grantResults.length > 0) {
-            if (grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-                SendMessage();
-            } else {
-                Toast.makeText(this, "Permisos de mensajería negados", Toast.LENGTH_SHORT).show();
-            }
-        }
     }
 
     private void _actualizarLocalizacion() {
@@ -128,7 +114,7 @@ public class MainActivity extends AppCompatActivity {
         if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
             return;
         }
-        ubicacion.requestLocationUpdates(LocationManager.GPS_PROVIDER, 1000, 0, new locationListener());
+        ubicacion.requestLocationUpdates(LocationManager.GPS_PROVIDER, 5000, 0, new locationListener());
     }
 
     private class locationListener implements LocationListener {
@@ -137,31 +123,17 @@ public class MainActivity extends AppCompatActivity {
         public void onLocationChanged(@NonNull Location location) {
             latitud = location.getLatitude();
             longitud = location.getLongitude();
+            Calendar calendar = Calendar.getInstance();
+            SimpleDateFormat simpleDateFormat = new SimpleDateFormat("hh:mm:ss a dd-MMM-yyyy");
+            String time_Stamp = simpleDateFormat.format(calendar.getTime());
+            String Message = String.format("12345%.7f,%.7f,%s", location.getLatitude(), location.getLongitude(), time_Stamp);
+            //Send TCP Messages
+            TCP_Sender messageSender = new TCP_Sender();
+            messageSender.execute(Message);
             txtLat.setText(String.format("%.7f",latitud));
             txtLong.setText(String.format("%.7f",longitud));
         }
 
-    }
-
-    private void SendMessage(){
-        int permissionCheck = ContextCompat.checkSelfPermission(this, Manifest.permission.SEND_SMS);
-        if (permissionCheck==PackageManager.PERMISSION_GRANTED) {
-            Calendar calendar = Calendar.getInstance();
-            SimpleDateFormat simpleDateFormat = new SimpleDateFormat("hh:mm:ss a dd-MMM-yyyy");
-            String time_Stamp = simpleDateFormat.format(calendar.getTime());
-            String phoneNumber = txt_Phone.getText().toString().trim();
-            String Message = String.format("Latitud: %s\nLongitud: %s\nFecha: %s", latitud, longitud, time_Stamp);
-
-            if(!txt_Phone.getText().toString().equals("") && txt_Phone.getText().toString().length() > 9){
-                SmsManager smsManager = SmsManager.getDefault();
-                smsManager.sendTextMessage(phoneNumber, null, Message, null, null);
-                Toast.makeText(this, "Mensaje Enviado", Toast.LENGTH_LONG).show();
-            }else{
-                Toast.makeText(this,"Ingresar un número de telefono válido", Toast.LENGTH_SHORT).show();
-            }
-        }else{
-            ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.SEND_SMS}, 0);
-        }
     }
 
 }

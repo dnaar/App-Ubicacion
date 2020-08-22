@@ -27,16 +27,6 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent" />
 
-    <Button
-        android:id="@+id/change_location_button"
-        android:layout_width="253dp"
-        android:layout_height="76dp"
-        android:layout_marginStart="76dp"
-        android:layout_marginBottom="84dp"
-        android:text="@string/enviar_ubicaci_n"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintStart_toStartOf="parent" />
-
     <TextView
         android:id="@+id/Title"
         android:layout_width="285dp"
@@ -48,19 +38,6 @@
         android:textStyle="bold"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent" />
-
-    <EditText
-        android:id="@+id/phone_text"
-        android:layout_width="305dp"
-        android:layout_height="62dp"
-        android:layout_marginStart="52dp"
-        android:layout_marginBottom="212dp"
-        android:ems="10"
-        android:hint="@string/ingrese_un_n_mero_de_tel_fono"
-        android:importantForAutofill="no"
-        android:inputType="phone"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintStart_toStartOf="parent" />
 
     <TextView
         android:id="@+id/textView"

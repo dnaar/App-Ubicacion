@@ -1,0 +1,6 @@
+<resources>
+    <string name="app_name">ProyectoUbicacion</string>
+    <string name="esta_es_tu_ubicaci_n">Esta es tu ubicación:</string>
+    <string name="longitud">Longitud</string>
+    <string name="latitud">Latitud</string>
+</resources>

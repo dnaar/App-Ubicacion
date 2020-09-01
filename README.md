@@ -1,4 +1,4 @@
-# App-Tio-Rico
+# App-Ubicacion
 
 This android app is being developed with educational purposes.
 

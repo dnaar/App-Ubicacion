@@ -112,7 +112,7 @@ public class MainActivity extends AppCompatActivity {
         if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
             return;
         }
-        ubicacion.requestLocationUpdates(LocationManager.GPS_PROVIDER, 1000, 0, new locationListener());
+        ubicacion.requestLocationUpdates(LocationManager.GPS_PROVIDER, 5000, 0, new locationListener());
     }
 
         private class locationListener implements LocationListener {
@@ -121,9 +121,9 @@ public class MainActivity extends AppCompatActivity {
             latitud = location.getLatitude();
             longitud = location.getLongitude();
             Calendar calendar = Calendar.getInstance();
-            SimpleDateFormat simpleDateFormat = new SimpleDateFormat("hh:mm:ss a dd-MMM-yyyy");
+            SimpleDateFormat simpleDateFormat = new SimpleDateFormat("HH,mm,dd,MM,yyyy");
             String time_Stamp = simpleDateFormat.format(calendar.getTime());
-            String Message = String.format("%.7f,%.7f,%s", location.getLatitude(), location.getLongitude(), time_Stamp);
+            String Message = String.format("%.5f,%.5f,%s", location.getLatitude(), location.getLongitude(), time_Stamp);
             //Send UDP Messages
             UDPSender client = new UDPSender(Message, 10840);
             executorService.submit(client);

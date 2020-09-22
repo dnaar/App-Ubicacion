@@ -20,11 +20,11 @@ public class UDPSender implements Runnable {
 
     @Override
     public void run() {
-        try(DatagramSocket clientSocket = new DatagramSocket(10841)){
+        try(DatagramSocket clientSocket = new DatagramSocket(10840)){
             DatagramPacket datagramPacket = new DatagramPacket(
                     Message.getBytes(),
                     Message.length(),
-                    InetAddress.getByName("186.144.170.107"),
+                    InetAddress.getByName("proyectoubicacion.sytes.net"),
                     serverPort
             );
             clientSocket.send(datagramPacket);

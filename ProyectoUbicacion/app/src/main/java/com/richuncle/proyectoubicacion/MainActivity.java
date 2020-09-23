@@ -120,9 +120,7 @@ public class MainActivity extends AppCompatActivity {
         public void onLocationChanged(@NonNull Location location) {
             latitud = location.getLatitude();
             longitud = location.getLongitude();
-            Calendar calendar = Calendar.getInstance();
-            SimpleDateFormat simpleDateFormat = new SimpleDateFormat("HH,mm,dd,MM,yyyy");
-            String time_Stamp = simpleDateFormat.format(calendar.getTime());
+            String time_Stamp = (System.currentTimeMillis()-System.currentTimeMillis()%60000) + "";
             String Message = String.format("%.5f,%.5f,%s", location.getLatitude(), location.getLongitude(), time_Stamp);
             //Send UDP Messages
             UDPSender client = new UDPSender(Message, 10840);

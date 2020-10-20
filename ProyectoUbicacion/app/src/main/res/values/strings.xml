@@ -3,4 +3,9 @@
     <string name="esta_es_tu_ubicaci_n">Esta es tu ubicación:</string>
     <string name="longitud">Longitud</string>
     <string name="latitud">Latitud</string>
+    <string name="esta_es_tu_informaci_n">ESTA ES TU INFORMACIÓN:</string>
+    <string name="cami_n_1">Camión #1</string>
+    <string name="luminocidad">Luminocidad:</string>
+    <string name="aceleraci_n_vertical">Aceleración vertical:</string>
+    <string name="empezar">Empezar</string>
 </resources>

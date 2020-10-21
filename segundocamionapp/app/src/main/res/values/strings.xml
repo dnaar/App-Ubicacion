@@ -1,0 +1,10 @@
+<resources>
+    <string name="app_name">SegundocamionApp</string>
+    <string name="esta_es_tu_informaci_n">ESTA ES TU INFORMACIÓN:</string>
+    <string name="cami_n_2">Camión #2</string>
+    <string name="latitud">Latitud</string>
+    <string name="longitud">Longitud</string>
+    <string name="luminocidad">Luminocidad:</string>
+    <string name="aceleraci_n_vertical">Aceleración vertical:</string>
+    <string name="empezar">empezar</string>
+</resources>

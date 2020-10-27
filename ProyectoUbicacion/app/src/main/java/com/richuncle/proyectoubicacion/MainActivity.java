@@ -6,13 +6,20 @@ import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
 
 import android.Manifest;
+import android.bluetooth.BluetoothAdapter;
+import android.bluetooth.BluetoothDevice;
+import android.bluetooth.BluetoothGatt;
+import android.bluetooth.BluetoothGattCallback;
+import android.bluetooth.BluetoothGattCharacteristic;
+import android.bluetooth.BluetoothGattDescriptor;
+import android.bluetooth.BluetoothManager;
+import android.bluetooth.BluetoothProfile;
+import android.bluetooth.le.BluetoothLeScanner;
+import android.bluetooth.le.ScanCallback;
+import android.bluetooth.le.ScanResult;
 import android.content.Context;
 import android.content.IntentSender;
 import android.content.pm.PackageManager;
-import android.hardware.Sensor;
-import android.hardware.SensorEvent;
-import android.hardware.SensorEventListener;
-import android.hardware.SensorManager;
 import android.location.Location;
 import android.location.LocationListener;
 import android.location.LocationManager;
@@ -32,16 +39,17 @@ import com.google.android.gms.location.LocationSettingsStatusCodes;
 import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.Task;
 
-import java.text.SimpleDateFormat;
-import java.util.Calendar;
+import java.util.List;
+import java.util.UUID;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
-public class MainActivity extends AppCompatActivity implements SensorEventListener {
+public class MainActivity extends AppCompatActivity {
 
     ExecutorService executorService = Executors.newFixedThreadPool(1);
 
-    double latitud, longitud, lumx_val, accel_val;
+    double latitud, longitud;
+    String data;
 
     private final int REQUEST_CHECK_CODE = 8989;
     private LocationSettingsRequest.Builder builder;
@@ -49,9 +57,20 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
     private static final int REQUEST_CODE_LOCATION_PERMISSION = 1;
     public TextView txtLat;
     public TextView txtLong;
-    public TextView txtlumx, txtaccel;
-    private SensorManager sensorManager;
-    Sensor lumx, accel;
+    private TextView txtdata;
+    private Button btnconectar;
+
+    //BLE implementation
+    BluetoothAdapter bluetoothAdapter;
+    BluetoothLeScanner bluetoothLeScanner;
+    BluetoothManager bluetoothManager;
+    BluetoothScanCallback bluetoothScanCallback;
+    BluetoothGatt gattClient;
+    private GattClientCallback gattClientCallback;
+    BluetoothGattCharacteristic characteristicID;
+    private static final UUID BLE_UART_UUID = UUID.fromString("00008655-0000-1000-8000-00805F9B34FB");
+    private static final UUID CHARACTERISTIC_UUID = UUID.fromString("00002626-0000-1000-8000-00805F9B34FB");
+    private static final UUID DESCRIPTOR_UUID = UUID.fromString("00002902-0000-1000-8000-00805F9B34FB");
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -59,8 +78,8 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
         setContentView(R.layout.activity_main);
         txtLat = findViewById(R.id.latitud_text);
         txtLong = findViewById(R.id.longitud_text);
-        txtlumx = findViewById(R.id.txt_lumx);
-        txtaccel = findViewById(R.id.txt_accel);
+        txtdata = findViewById(R.id.txt_data);
+        btnconectar = findViewById(R.id.btn_connect);
 
         //Confirmación de localización activada-----------------------------------
         LocationRequest request = new LocationRequest().setFastestInterval(1500).setInterval(3000).setPriority(LocationRequest.PRIORITY_HIGH_ACCURACY);
@@ -72,7 +91,7 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
                 try {
                     task.getResult(ApiException.class);
                 } catch (ApiException e) {
-                    switch(e.getStatusCode()){
+                    switch (e.getStatusCode()) {
                         case LocationSettingsStatusCodes
                                 .RESOLUTION_REQUIRED:
                             try {
@@ -80,12 +99,11 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
                                 resolvableApiException.startResolutionForResult(MainActivity.this, REQUEST_CHECK_CODE);
                             } catch (IntentSender.SendIntentException ex) {
                                 ex.printStackTrace();
-                            }catch (ClassCastException ex){
+                            } catch (ClassCastException ex) {
 
                             }
                             break;
-                        case LocationSettingsStatusCodes.SETTINGS_CHANGE_UNAVAILABLE:
-                        {
+                        case LocationSettingsStatusCodes.SETTINGS_CHANGE_UNAVAILABLE: {
                             break;
                         }
                     }
@@ -101,26 +119,20 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
                     new String[]{Manifest.permission.ACCESS_FINE_LOCATION},
                     REQUEST_CODE_LOCATION_PERMISSION
             );
-        }else{
+        } else {
             setListener();
         }
-        // Manejo de sensores
-        sensorManager  =(SensorManager) getSystemService(Context.SENSOR_SERVICE);
-        lumx = sensorManager.getDefaultSensor(Sensor.TYPE_LIGHT);
-        if(lumx!=null){
-            sensorManager.registerListener(MainActivity.this, lumx, SensorManager.SENSOR_DELAY_NORMAL);
-        }else{
-            txtlumx.setText("Sensor lumínico no disponible");
-        }
-        accel = sensorManager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER);
-        if(accel != null){
-            sensorManager.registerListener(MainActivity.this, accel, SensorManager.SENSOR_DELAY_NORMAL);
-        }else{
-            txtaccel.setText("Sensor acelerómetro no disponible");
-        }
+        bluetoothManager = (BluetoothManager) getSystemService(BLUETOOTH_SERVICE);
+        bluetoothAdapter = bluetoothManager.getAdapter();
+        btnconectar.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                startScan();
+            }
+        });
     }
 
-    public void setListener(){
+    public void setListener() {
         final Button startbutton = findViewById(R.id.btn_start);
         startbutton.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -140,7 +152,6 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
     }
 
 
-
     @Override
     public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults);
@@ -153,37 +164,110 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
         }
     }
 
-        private class locationListener implements LocationListener {
+    private class locationListener implements LocationListener {
         @Override
         public void onLocationChanged(@NonNull Location location) {
             latitud = location.getLatitude();
             longitud = location.getLongitude();
-            String time_Stamp = (System.currentTimeMillis()-System.currentTimeMillis()%60000) + "";
-            String Message = String.format("%.5f,%.5f,%s,%.2f,%.2f", location.getLatitude(), location.getLongitude(), time_Stamp,lumx_val,accel_val);
+            String time_Stamp = (System.currentTimeMillis() - System.currentTimeMillis() % 60000) + "";
+            String Message = String.format("%.5f,%.5f,%s,%s", location.getLatitude(), location.getLongitude(), time_Stamp, data);
             //Send UDP Messages
             UDPSender client = new UDPSender(Message, 10840);
             executorService.submit(client);
             //Update on screen data
-            txtlumx.setText(String.format("%.2f", lumx_val));
-            txtaccel.setText(String.format("%.2f", accel_val));
-            txtLat.setText(String.format("%.5f",latitud));
-            txtLong.setText(String.format("%.5f",longitud));
+            txtdata.setText(String.format("%s", data));
+            txtLat.setText(String.format("%.5f", latitud));
+            txtLong.setText(String.format("%.5f", longitud));
         }
     }
 
-    @Override
-    public void onSensorChanged(SensorEvent sensorEvent) {
-        Sensor sensor = sensorEvent.sensor;
-        if(sensor.getType() == Sensor.TYPE_LIGHT){
-            lumx_val = sensorEvent.values[0];
-        }else if (sensor.getType() == Sensor.TYPE_ACCELEROMETER){
-            accel_val = sensorEvent.values[1];
+    private void startScan() {
+        bluetoothScanCallback = new BluetoothScanCallback();
+        bluetoothLeScanner = bluetoothAdapter.getBluetoothLeScanner();
+        bluetoothLeScanner.startScan(bluetoothScanCallback);
+    }
+
+    private void connectDevice(BluetoothDevice device) {
+        if (device == null) ;
+        gattClientCallback = new GattClientCallback();
+        gattClient = device.connectGatt(this, false, gattClientCallback);
+    }
+
+    private class BluetoothScanCallback extends ScanCallback {
+        @Override
+        public void onScanResult(int callbackType, ScanResult result) {
+            if (result.getDevice().getName() != null) {
+                if (result.getDevice().getName().equals("D_E_Connect")) {
+                    // When find your device, connect.
+                    connectDevice(result.getDevice());
+                    bluetoothLeScanner.stopScan(bluetoothScanCallback); // stop scan
+                    btnconectar.setVisibility(View.INVISIBLE);
+                }
+            }
+        }
+
+        @Override
+        public void onBatchScanResults(List<ScanResult> results) {
+        }
+
+        @Override
+        public void onScanFailed(int errorCode) {
         }
     }
 
-    @Override
-    public void onAccuracyChanged(Sensor sensor, int i) {
+    private class GattClientCallback extends BluetoothGattCallback {
+        @Override
+        public void onConnectionStateChange(BluetoothGatt gatt, int status, int newState) {
+            super.onConnectionStateChange(gatt, status, newState);
+            if (status == BluetoothGatt.GATT_FAILURE) {
+                return;
+            } else if (status != BluetoothGatt.GATT_SUCCESS) {
+                return;
+            }
 
+            if (newState == BluetoothProfile.STATE_CONNECTED) {
+                gatt.discoverServices();
+            } else if (newState == BluetoothProfile.STATE_DISCONNECTED) {
+            }
+        }
+
+        @Override
+        public void onServicesDiscovered(BluetoothGatt gatt, int status) {
+            super.onServicesDiscovered(gatt, status);
+            if (status != BluetoothGatt.GATT_SUCCESS) return;
+            // Reference your UUIDs
+            characteristicID = gatt.getService(BLE_UART_UUID).getCharacteristic(CHARACTERISTIC_UUID);
+            gatt.setCharacteristicNotification(characteristicID, true);
+            BluetoothGattDescriptor descriptor = characteristicID.getDescriptor(DESCRIPTOR_UUID);
+            descriptor.setValue(BluetoothGattDescriptor.ENABLE_NOTIFICATION_VALUE);
+            gatt.writeDescriptor(descriptor);
+        }
+
+        @Override
+        public void onCharacteristicRead(BluetoothGatt gatt, BluetoothGattCharacteristic characteristic, int status) {
+            super.onCharacteristicRead(gatt, characteristic, status);
+            data = new String(characteristic.getValue());
+        }
+
+        @Override
+        public void onCharacteristicWrite(BluetoothGatt gatt, BluetoothGattCharacteristic characteristic, int status) {
+            super.onCharacteristicWrite(gatt, characteristic, status);
+        }
+
+        @Override
+        public void onCharacteristicChanged(BluetoothGatt gatt, BluetoothGattCharacteristic characteristic) {
+            super.onCharacteristicChanged(gatt, characteristic);
+            data = new String(characteristic.getValue());
+        }
+
+        @Override
+        public void onDescriptorRead(BluetoothGatt gatt, BluetoothGattDescriptor descriptor, int status) {
+            super.onDescriptorRead(gatt, descriptor, status);
+        }
+
+        @Override
+        public void onDescriptorWrite(BluetoothGatt gatt, BluetoothGattDescriptor descriptor, int status) {
+            super.onDescriptorWrite(gatt, descriptor, status);
+        }
     }
-
 }

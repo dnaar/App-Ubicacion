@@ -8,4 +8,6 @@
     <string name="luminocidad">Luminocidad:</string>
     <string name="aceleraci_n_vertical">Aceleración vertical:</string>
     <string name="empezar">Empezar</string>
+    <string name="conectar">Conectar</string>
+    <string name="info_variables_externas">Info. Variables externas:</string>
 </resources>

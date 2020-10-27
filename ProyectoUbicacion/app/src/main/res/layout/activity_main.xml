@@ -7,6 +7,16 @@
     android:background="#FFFFFF"
     tools:context=".MainActivity">
 
+    <Button
+        android:id="@+id/btn_connect"
+        android:layout_width="146dp"
+        android:layout_height="48dp"
+        android:layout_marginStart="132dp"
+        android:layout_marginBottom="60dp"
+        android:text="@string/conectar"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintStart_toStartOf="parent" />
+
     <TextView
         android:id="@+id/latitud_text"
         android:layout_width="303dp"
@@ -56,34 +66,13 @@
         android:layout_height="43dp"
         android:layout_marginStart="40dp"
         android:layout_marginTop="372dp"
-        android:text="@string/luminocidad"
+        android:text="@string/info_variables_externas"
         android:textSize="24sp"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent" />
 
     <TextView
-        android:id="@+id/textView4"
-        android:layout_width="303dp"
-        android:layout_height="43dp"
-        android:layout_marginStart="40dp"
-        android:layout_marginTop="480dp"
-        android:text="@string/aceleraci_n_vertical"
-        android:textSize="24sp"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent" />
-
-    <TextView
-        android:id="@+id/txt_accel"
-        android:layout_width="303dp"
-        android:layout_height="43dp"
-        android:layout_marginStart="40dp"
-        android:layout_marginTop="524dp"
-        android:textSize="24sp"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent" />
-
-    <TextView
-        android:id="@+id/txt_lumx"
+        android:id="@+id/txt_data"
         android:layout_width="303dp"
         android:layout_height="43dp"
         android:layout_marginStart="40dp"
@@ -120,7 +109,7 @@
         android:layout_width="146dp"
         android:layout_height="48dp"
         android:layout_marginStart="132dp"
-        android:layout_marginBottom="68dp"
+        android:layout_marginBottom="124dp"
         android:text="@string/empezar"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintStart_toStartOf="parent" />
